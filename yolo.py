@@ -5,21 +5,41 @@ from keras.engine.topology import Layer
 import tensorflow as tf
 
 class YoloLayer(Layer):
-    def __init__(self, anchors, max_grid, batch_size, warmup_batches, ignore_thresh, **kwargs):
+       def __init__(self, anchors, max_grid, batch_size, warmup_batches,
+                 ignore_thresh, **kwargs):
         # make the model settings persistent
         self.ignore_thresh = ignore_thresh
         self.warmup_batches = warmup_batches
-        self.anchors = tf.constant(anchors, dtype='float', shape=[1,1,1,3,2])
+        self._anchors = anchors
+        self.anchors = tf.constant(
+            anchors, dtype='float', shape=[1, 1, 1, 3, 2])
+        self.max_grid = max_grid
+        self.batch_size = batch_size
 
         # make a persistent mesh grid
         max_grid_h, max_grid_w = max_grid
 
-        cell_x = tf.to_float(tf.reshape(tf.tile(tf.range(max_grid_w), [max_grid_h]), (1, max_grid_h, max_grid_w, 1, 1)))
-        cell_y = tf.transpose(cell_x, (0,2,1,3,4))
-        self.cell_grid = tf.tile(tf.concat([cell_x,cell_y],-1), [batch_size, 1, 1, 3, 1])
+        cell_x = tf.to_float(
+            tf.reshape(
+                tf.tile(tf.range(max_grid_w), [max_grid_h]),
+                (1, max_grid_h, max_grid_w, 1, 1)))
+        cell_y = tf.transpose(cell_x, (0, 2, 1, 3, 4))
+        self.cell_grid = tf.tile(
+            tf.concat([cell_x, cell_y], -1), [batch_size, 1, 1, 3, 1])
 
         super(YoloLayer, self).__init__(**kwargs)
 
+    def get_config(self):
+        config = {
+            'anchors': self._anchors,
+            'max_grid': self.max_grid,
+            'batch_size': self.batch_size,
+            'warmup_batches': self.warmup_batches,
+            'ignore_thresh': self.ignore_thresh
+        }
+        base_config = super(YoloLayer, self).get_config()
+        return dict(list(base_config.items()) + list(config.items()))
+    
     def build(self, input_shape):
         super(YoloLayer, self).build(input_shape)  # Be sure to call this somewhere!
 
