@@ -197,19 +197,21 @@ def _main_(args):
     train_model.compile(loss=dummy_loss, optimizer=optimizer)
 
     callbacks = create_callbacks(config['train']['saved_weights_name'])
-
-    train_model.fit_generator(
-        generator        = train_generator, 
-        steps_per_epoch  = len(train_generator) * config['train']['train_times'], 
-        epochs           = config['train']['nb_epochs'] + config['train']['warmup_epochs'], 
-        verbose          = 2 if config['train']['debug'] else 1,
-        validation_data  = valid_generator,
-        validation_steps = len(valid_generator) * config['valid']['valid_times'],
-        callbacks        = callbacks, 
-        workers          = 4,
-        max_queue_size   = 8
-    )
-
+    try:
+        train_model.fit_generator(
+            generator        = train_generator, 
+            steps_per_epoch  = len(train_generator) * config['train']['train_times'], 
+            epochs           = config['train']['nb_epochs'] + config['train']['warmup_epochs'], 
+            verbose          = 2 if config['train']['debug'] else 1,
+            validation_data  = valid_generator,
+            validation_steps = len(valid_generator) * config['valid']['valid_times'],
+            callbacks        = callbacks, 
+            workers          = 4,
+            max_queue_size   = 8
+        )
+    except:
+        pass
+        
     # load the best weight before early stop
     train_model.load_weights(config['train']['saved_weights_name'])
     
